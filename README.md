@@ -2,7 +2,7 @@
 
 A production-grade API gateway for Large Language Model applications, built in Go with defense-in-depth security architecture.
 
-This project demonstrates how to build the infrastructure layer behind a high-volume LLM service (think claude.ai) — focusing on the security, compliance, and scalability concerns that matter in production.
+This project demonstrates how to build the infrastructure layer behind a high-volume LLM service — focusing on the security, compliance, and scalability concerns that matter in production.
 
 ## Security Coverage
 
