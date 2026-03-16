@@ -11,6 +11,7 @@ type Config struct {
 	Port           int
 	Environment    string
 	JWTSecret      string // Symmetric key for JWT signing; use asymmetric (RS256) in production.
+	JWTExpiration  int    // Token expiration in minutes.
 	RateLimitRPS   int
 	AllowedOrigins string
 }
@@ -21,6 +22,7 @@ func Load() *Config {
 		Port:           getEnvInt("PORT", 8080),
 		Environment:    getEnvStr("ENVIRONMENT", "development"),
 		JWTSecret:      getEnvStr("JWT_SECRET", "CHANGE-ME-IN-PRODUCTION"),
+		JWTExpiration:  getEnvInt("JWT_EXPIRATION_MINUTES", 60),
 		RateLimitRPS:   getEnvInt("RATE_LIMIT_RPS", 10),
 		AllowedOrigins: getEnvStr("ALLOWED_ORIGINS", "*"),
 	}

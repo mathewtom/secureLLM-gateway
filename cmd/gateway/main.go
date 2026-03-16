@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mathewtom/secureLLM-gateway/internal/auth"
 	"github.com/mathewtom/secureLLM-gateway/internal/config"
 	"github.com/mathewtom/secureLLM-gateway/internal/handlers"
 	"github.com/mathewtom/secureLLM-gateway/internal/middleware"
@@ -31,9 +32,12 @@ func main() {
 		"environment", cfg.Environment,
 	)
 
+	// Initialize JWT token service for authentication.
+	tokenService := auth.NewTokenService(cfg.JWTSecret, cfg.JWTExpiration, "securellm-gateway")
+
 	// Router setup — standard library ServeMux to minimize dependency surface.
 	mux := http.NewServeMux()
-	handlers.RegisterRoutes(mux)
+	handlers.RegisterRoutes(mux, tokenService)
 
 	// Middleware chain applied outermost-first on incoming requests:
 	// Recovery → Logging → SecurityHeaders → RequestID → handler
