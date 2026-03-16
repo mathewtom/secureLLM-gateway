@@ -143,17 +143,18 @@ secureLLM-gateway/
 │   │   ├── auth.go       # Token issuance endpoint
 │   │   ├── chat.go       # Chat completion endpoint
 │   │   ├── health.go     # Health check endpoint
-│   │   └── routes.go     # Route registration with per-route RBAC
+│   │   └── routes.go     # Route registration with per-route middleware
 │   ├── middleware/        # Security middleware chain
 │   │   ├── auth.go       # JWT Bearer token validation
 │   │   ├── chain.go      # Middleware composition
 │   │   ├── logging.go    # Structured audit logging
+│   │   ├── ratelimit.go  # Per-user rate limiting
 │   │   ├── rbac.go       # Role-based access control
 │   │   ├── recovery.go   # Panic recovery
 │   │   ├── request_id.go # Distributed request tracing
 │   │   └── security_headers.go
 │   ├── models/           # Data models
-│   ├── ratelimit/        # Per-user rate limiting
+│   ├── ratelimit/        # Token bucket rate limiter
 │   ├── sanitizer/        # Input/output sanitization
 │   └── audit/            # Audit trail and compliance logging
 ├── pkg/response/         # Standardized API responses
@@ -174,7 +175,10 @@ All configuration is via environment variables:
 | `ENVIRONMENT` | `development` | Runtime environment |
 | `JWT_SECRET` | — | JWT signing key (required in production) |
 | `JWT_EXPIRATION_MINUTES` | `60` | Token lifetime in minutes |
-| `RATE_LIMIT_RPS` | `10` | Max requests per second per user |
+| `RATE_LIMIT_ADMIN_RPS` | `50` | Rate limit for admin role (req/s) |
+| `RATE_LIMIT_USER_RPS` | `20` | Rate limit for user role (req/s) |
+| `RATE_LIMIT_READONLY_RPS` | `10` | Rate limit for readonly role (req/s) |
+| `RATE_LIMIT_BURST` | `10` | Token bucket burst capacity |
 | `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
 
 ## Security Headers
@@ -196,7 +200,7 @@ Cache-Control: no-store, no-cache, must-revalidate
 
 - [x] Project scaffold with security middleware chain
 - [x] JWT authentication with RBAC
-- [ ] Per-user rate limiting (token bucket)
+- [x] Per-user rate limiting (token bucket, role-based)
 - [ ] Prompt injection detection
 - [ ] Output sanitization and PII redaction
 - [ ] Streaming SSE responses

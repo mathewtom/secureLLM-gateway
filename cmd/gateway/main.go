@@ -15,6 +15,7 @@ import (
 	"github.com/mathewtom/secureLLM-gateway/internal/config"
 	"github.com/mathewtom/secureLLM-gateway/internal/handlers"
 	"github.com/mathewtom/secureLLM-gateway/internal/middleware"
+	"github.com/mathewtom/secureLLM-gateway/internal/ratelimit"
 )
 
 func main() {
@@ -35,9 +36,22 @@ func main() {
 	// Initialize JWT token service for authentication.
 	tokenService := auth.NewTokenService(cfg.JWTSecret, cfg.JWTExpiration, "securellm-gateway")
 
+	// Per-user rate limiter with role-based token bucket rates.
+	limiter := ratelimit.NewLimiter(
+		ratelimit.RoleRates{
+			"admin":    {RequestsPerSecond: float64(cfg.RateLimitAdmin), Burst: cfg.RateLimitBurst},
+			"user":     {RequestsPerSecond: float64(cfg.RateLimitUser), Burst: cfg.RateLimitBurst},
+			"readonly": {RequestsPerSecond: float64(cfg.RateLimitReadonly), Burst: cfg.RateLimitBurst},
+		},
+		ratelimit.Rate{RequestsPerSecond: float64(cfg.RateLimitUser), Burst: cfg.RateLimitBurst},
+		5*time.Minute,  // Cleanup interval.
+		10*time.Minute, // Bucket TTL.
+	)
+	defer limiter.Stop()
+
 	// Router setup — standard library ServeMux to minimize dependency surface.
 	mux := http.NewServeMux()
-	handlers.RegisterRoutes(mux, tokenService)
+	handlers.RegisterRoutes(mux, tokenService, limiter)
 
 	// Middleware chain applied outermost-first on incoming requests:
 	// Recovery → Logging → SecurityHeaders → RequestID → handler

@@ -12,8 +12,13 @@ type Config struct {
 	Environment    string
 	JWTSecret      string // Symmetric key for JWT signing; use asymmetric (RS256) in production.
 	JWTExpiration  int    // Token expiration in minutes.
-	RateLimitRPS   int
 	AllowedOrigins string
+
+	// Per-role rate limits (requests per second).
+	RateLimitAdmin    int
+	RateLimitUser     int
+	RateLimitReadonly int
+	RateLimitBurst    int // Token bucket capacity.
 }
 
 // Load reads configuration from environment variables with safe defaults.
@@ -23,7 +28,10 @@ func Load() *Config {
 		Environment:    getEnvStr("ENVIRONMENT", "development"),
 		JWTSecret:      getEnvStr("JWT_SECRET", "CHANGE-ME-IN-PRODUCTION"),
 		JWTExpiration:  getEnvInt("JWT_EXPIRATION_MINUTES", 60),
-		RateLimitRPS:   getEnvInt("RATE_LIMIT_RPS", 10),
+		RateLimitAdmin:    getEnvInt("RATE_LIMIT_ADMIN_RPS", 50),
+		RateLimitUser:     getEnvInt("RATE_LIMIT_USER_RPS", 20),
+		RateLimitReadonly: getEnvInt("RATE_LIMIT_READONLY_RPS", 10),
+		RateLimitBurst:    getEnvInt("RATE_LIMIT_BURST", 10),
 		AllowedOrigins: getEnvStr("ALLOWED_ORIGINS", "*"),
 	}
 }
