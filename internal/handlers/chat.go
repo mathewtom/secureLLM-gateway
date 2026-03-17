@@ -21,8 +21,7 @@ type chatResponse struct {
 }
 
 // handleChat processes chat completion requests. Currently returns a mock
-// response; will proxy to a real LLM backend with prompt injection
-// detection and output sanitization.
+// response; will proxy to a real LLM backend with output sanitization.
 func handleChat(w http.ResponseWriter, r *http.Request) {
 	var req chatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

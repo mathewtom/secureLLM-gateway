@@ -25,7 +25,7 @@ This project demonstrates how to build the infrastructure layer behind a high-vo
 
 | # | Risk | Mitigation |
 |---|------|------------|
-| LLM01 | Prompt Injection | Input sanitization, prompt/response boundary enforcement |
+| LLM01 | Prompt Injection | Scoring-based regex detection across 6 attack categories (OWASP LLM01), validated against regex101.com |
 | LLM02 | Insecure Output Handling | Output encoding, PII redaction, content filtering |
 | LLM04 | Model Denial of Service | Per-user rate limiting, request size limits, token budgets |
 | LLM05 | Supply Chain Vulnerabilities | Minimal dependencies, pinned versions, SBOM generation |
@@ -148,6 +148,7 @@ secureLLM-gateway/
 │   │   ├── auth.go       # JWT Bearer token validation
 │   │   ├── chain.go      # Middleware composition
 │   │   ├── logging.go    # Structured audit logging
+│   │   ├── prompt_guard.go # Prompt injection detection
 │   │   ├── ratelimit.go  # Per-user rate limiting
 │   │   ├── rbac.go       # Role-based access control
 │   │   ├── recovery.go   # Panic recovery
@@ -155,7 +156,7 @@ secureLLM-gateway/
 │   │   └── security_headers.go
 │   ├── models/           # Data models
 │   ├── ratelimit/        # Token bucket rate limiter
-│   ├── sanitizer/        # Input/output sanitization
+│   ├── sanitizer/        # Prompt injection detection engine
 │   └── audit/            # Audit trail and compliance logging
 ├── pkg/response/         # Standardized API responses
 ├── deployments/
@@ -179,6 +180,7 @@ All configuration is via environment variables:
 | `RATE_LIMIT_USER_RPS` | `20` | Rate limit for user role (req/s) |
 | `RATE_LIMIT_READONLY_RPS` | `10` | Rate limit for readonly role (req/s) |
 | `RATE_LIMIT_BURST` | `10` | Token bucket burst capacity |
+| `PROMPT_GUARD_THRESHOLD` | `8` | Prompt injection scoring threshold (lower = stricter) |
 | `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
 
 ## Security Headers
@@ -201,7 +203,7 @@ Cache-Control: no-store, no-cache, must-revalidate
 - [x] Project scaffold with security middleware chain
 - [x] JWT authentication with RBAC
 - [x] Per-user rate limiting (token bucket, role-based)
-- [ ] Prompt injection detection
+- [x] Prompt injection detection (scoring-based, OWASP LLM01)
 - [ ] Output sanitization and PII redaction
 - [ ] Streaming SSE responses
 - [ ] Kubernetes deployment manifests

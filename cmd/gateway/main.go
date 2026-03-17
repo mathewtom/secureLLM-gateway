@@ -16,6 +16,7 @@ import (
 	"github.com/mathewtom/secureLLM-gateway/internal/handlers"
 	"github.com/mathewtom/secureLLM-gateway/internal/middleware"
 	"github.com/mathewtom/secureLLM-gateway/internal/ratelimit"
+	"github.com/mathewtom/secureLLM-gateway/internal/sanitizer"
 )
 
 func main() {
@@ -49,9 +50,12 @@ func main() {
 	)
 	defer limiter.Stop()
 
+	// Prompt injection detection filter (OWASP LLM01).
+	guard := sanitizer.NewPromptGuard(cfg.PromptGuardThreshold)
+
 	// Router setup — standard library ServeMux to minimize dependency surface.
 	mux := http.NewServeMux()
-	handlers.RegisterRoutes(mux, tokenService, limiter)
+	handlers.RegisterRoutes(mux, tokenService, limiter, guard)
 
 	// Middleware chain applied outermost-first on incoming requests:
 	// Recovery → Logging → SecurityHeaders → RequestID → handler

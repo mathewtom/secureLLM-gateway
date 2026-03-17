@@ -19,6 +19,8 @@ type Config struct {
 	RateLimitUser     int
 	RateLimitReadonly int
 	RateLimitBurst    int // Token bucket capacity.
+
+	PromptGuardThreshold int // Prompt injection scoring threshold.
 }
 
 // Load reads configuration from environment variables with safe defaults.
@@ -32,7 +34,8 @@ func Load() *Config {
 		RateLimitUser:     getEnvInt("RATE_LIMIT_USER_RPS", 20),
 		RateLimitReadonly: getEnvInt("RATE_LIMIT_READONLY_RPS", 10),
 		RateLimitBurst:    getEnvInt("RATE_LIMIT_BURST", 10),
-		AllowedOrigins: getEnvStr("ALLOWED_ORIGINS", "*"),
+		PromptGuardThreshold: getEnvInt("PROMPT_GUARD_THRESHOLD", 8),
+		AllowedOrigins:       getEnvStr("ALLOWED_ORIGINS", "*"),
 	}
 }
 
