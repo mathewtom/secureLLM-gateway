@@ -53,9 +53,12 @@ func main() {
 	// Prompt injection detection filter (OWASP LLM01).
 	guard := sanitizer.NewPromptGuard(cfg.PromptGuardThreshold)
 
+	// Output sanitizer: PII redaction, HTML encoding, content filtering (OWASP LLM02).
+	outSanitizer := sanitizer.NewOutputSanitizer(cfg.OutputHTMLEncoding)
+
 	// Router setup — standard library ServeMux to minimize dependency surface.
 	mux := http.NewServeMux()
-	handlers.RegisterRoutes(mux, tokenService, limiter, guard)
+	handlers.RegisterRoutes(mux, tokenService, limiter, guard, outSanitizer)
 
 	// Middleware chain applied outermost-first on incoming requests:
 	// Recovery → Logging → SecurityHeaders → RequestID → handler

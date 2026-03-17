@@ -21,17 +21,20 @@ This project demonstrates how to build the infrastructure layer behind a high-vo
 | A09 | Logging Failures | Structured JSON audit logs with request tracing |
 | A10 | SSRF | Restricted outbound connections, allowlisted backends |
 
-### OWASP Top 10 for LLM Applications
+### OWASP Top 10 for LLM Applications (2025)
 
-| # | Risk | Mitigation |
-|---|------|------------|
-| LLM01 | Prompt Injection | Scoring-based regex detection across 6 attack categories (OWASP LLM01), validated against regex101.com |
-| LLM02 | Insecure Output Handling | Output encoding, PII redaction, content filtering |
-| LLM04 | Model Denial of Service | Per-user rate limiting, request size limits, token budgets |
-| LLM05 | Supply Chain Vulnerabilities | Minimal dependencies, pinned versions, SBOM generation |
-| LLM06 | Excessive Agency | RBAC-restricted model access, scoped permissions per role |
-| LLM07 | Data Leakage | PII detection and redaction in responses |
-| LLM09 | Overreliance | Audit logging of all LLM interactions for review |
+| # | Risk | Mitigation | Scope |
+|---|------|------------|-------|
+| LLM01 | Prompt Injection | Scoring-based regex detection across 6 attack categories, validated against regex101.com | Gateway — implemented |
+| LLM02 | Sensitive Information Disclosure | PII redaction (SSN, CC, email, phone, AWS keys, IBAN) with Luhn validation | Gateway — implemented |
+| LLM03 | Supply Chain | Minimal dependencies (single external dep), pinned versions, distroless containers | Gateway — implemented |
+| LLM04 | Data and Model Poisoning | Training data integrity — out of scope for gateway layer | Model-level |
+| LLM05 | Improper Output Handling | HTML output encoding, content filtering (destructive commands, script injection, exfiltration) | Gateway — implemented |
+| LLM06 | Excessive Agency | RBAC-restricted model access, scoped permissions per role | Gateway — implemented |
+| LLM07 | System Prompt Leakage | Prompt extraction detection in input filter; system prompt treated as discoverable | Gateway — implemented |
+| LLM08 | Vector and Embedding Weaknesses | RAG/embedding-specific — out of scope for gateway layer | Model-level |
+| LLM09 | Misinformation | Audit logging of all LLM interactions for downstream review | Gateway — partial |
+| LLM10 | Unbounded Consumption | Per-user token bucket rate limiting with role-based rates and burst control | Gateway — implemented |
 
 ### PCI DSS Compliance Controls
 
@@ -69,7 +72,7 @@ Client Request ───▶│  Rate Limiter                               │
                     │  LLM Proxy ──────────▶ LLM Backend (mock)   │
                     │      │                                      │
                     │      ▼                                      │
-                    │  Output Sanitizer (PII Redaction)           │
+                    │  Output Sanitizer (PII / Encoding / Filter)  │
                     │      │                                      │
                     └──────┼──────────────────────────────────────┘
                            ▼
@@ -148,6 +151,7 @@ secureLLM-gateway/
 │   │   ├── auth.go       # JWT Bearer token validation
 │   │   ├── chain.go      # Middleware composition
 │   │   ├── logging.go    # Structured audit logging
+│   │   ├── output_sanitizer.go # PII redaction, encoding, content filter
 │   │   ├── prompt_guard.go # Prompt injection detection
 │   │   ├── ratelimit.go  # Per-user rate limiting
 │   │   ├── rbac.go       # Role-based access control
@@ -156,7 +160,7 @@ secureLLM-gateway/
 │   │   └── security_headers.go
 │   ├── models/           # Data models
 │   ├── ratelimit/        # Token bucket rate limiter
-│   ├── sanitizer/        # Prompt injection detection engine
+│   ├── sanitizer/        # Input/output security filters
 │   └── audit/            # Audit trail and compliance logging
 ├── pkg/response/         # Standardized API responses
 ├── deployments/
@@ -181,6 +185,7 @@ All configuration is via environment variables:
 | `RATE_LIMIT_READONLY_RPS` | `10` | Rate limit for readonly role (req/s) |
 | `RATE_LIMIT_BURST` | `10` | Token bucket burst capacity |
 | `PROMPT_GUARD_THRESHOLD` | `8` | Prompt injection scoring threshold (lower = stricter) |
+| `OUTPUT_HTML_ENCODING` | `true` | HTML-encode LLM output to prevent XSS |
 | `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
 
 ## Security Headers
@@ -204,8 +209,8 @@ Cache-Control: no-store, no-cache, must-revalidate
 - [x] JWT authentication with RBAC
 - [x] Per-user rate limiting (token bucket, role-based)
 - [x] Prompt injection detection (scoring-based, OWASP LLM01)
-- [ ] Output sanitization and PII redaction
-- [ ] Streaming SSE responses
+- [x] Output sanitization — PII redaction, HTML encoding, content filtering (OWASP LLM02/LLM05)
+- [ ] Request body size limits
 - [ ] Kubernetes deployment manifests
 - [ ] CI/CD pipeline with SAST and dependency scanning
 - [ ] Security test suite (fuzzing, integration)

@@ -20,7 +20,8 @@ type Config struct {
 	RateLimitReadonly int
 	RateLimitBurst    int // Token bucket capacity.
 
-	PromptGuardThreshold int // Prompt injection scoring threshold.
+	PromptGuardThreshold int  // Prompt injection scoring threshold.
+	OutputHTMLEncoding   bool // Enable HTML encoding of LLM output.
 }
 
 // Load reads configuration from environment variables with safe defaults.
@@ -35,6 +36,7 @@ func Load() *Config {
 		RateLimitReadonly: getEnvInt("RATE_LIMIT_READONLY_RPS", 10),
 		RateLimitBurst:    getEnvInt("RATE_LIMIT_BURST", 10),
 		PromptGuardThreshold: getEnvInt("PROMPT_GUARD_THRESHOLD", 8),
+		OutputHTMLEncoding:   getEnvBool("OUTPUT_HTML_ENCODING", true),
 		AllowedOrigins:       getEnvStr("ALLOWED_ORIGINS", "*"),
 	}
 }
@@ -44,6 +46,18 @@ func getEnvStr(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	b, err := strconv.ParseBool(value)
+	if err != nil {
+		return fallback
+	}
+	return b
 }
 
 func getEnvInt(key string, fallback int) int {
