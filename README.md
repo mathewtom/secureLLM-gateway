@@ -54,19 +54,22 @@ This project demonstrates how to build the infrastructure layer behind a high-vo
                     ┌─────────────────────────────────────────────┐
                     │              SecureLLM Gateway              │
                     │                                             │
-Client Request ───▶│  Rate Limiter                               │
+Client Request ───▶│  Recovery ──▶ Logging ──▶ Audit Log         │
                     │      │                                      │
                     │      ▼                                      │
-                    │  Request ID ──▶ Audit Log                   │
-                    │      │                                      │
-                    │      ▼                                      │
-                    │  Security Headers (HSTS, CSP, X-Frame)      │
+                    │  Request ID + Security Headers              │
                     │      │                                      │
                     │      ▼                                      │
                     │  JWT Auth + RBAC                            │
                     │      │                                      │
                     │      ▼                                      │
-                    │  Input Sanitizer (Prompt Injection Filter)   │
+                    │  Rate Limiter (per-user token bucket)        │
+                    │      │                                      │
+                    │      ▼                                      │
+                    │  Body Limit (max request size)               │
+                    │      │                                      │
+                    │      ▼                                      │
+                    │  Prompt Guard (injection detection)          │
                     │      │                                      │
                     │      ▼                                      │
                     │  LLM Proxy ──────────▶ LLM Backend (mock)   │
