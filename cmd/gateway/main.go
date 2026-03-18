@@ -58,7 +58,7 @@ func main() {
 
 	// Router setup — standard library ServeMux to minimize dependency surface.
 	mux := http.NewServeMux()
-	handlers.RegisterRoutes(mux, tokenService, limiter, guard, outSanitizer)
+	handlers.RegisterRoutes(mux, tokenService, limiter, guard, outSanitizer, int64(cfg.MaxBodyBytes))
 
 	// Middleware chain applied outermost-first on incoming requests:
 	// Recovery → Logging → SecurityHeaders → RequestID → handler

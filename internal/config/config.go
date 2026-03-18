@@ -22,6 +22,7 @@ type Config struct {
 
 	PromptGuardThreshold int  // Prompt injection scoring threshold.
 	OutputHTMLEncoding   bool // Enable HTML encoding of LLM output.
+	MaxBodyBytes         int  // Maximum request body size in bytes.
 }
 
 // Load reads configuration from environment variables with safe defaults.
@@ -37,6 +38,7 @@ func Load() *Config {
 		RateLimitBurst:    getEnvInt("RATE_LIMIT_BURST", 10),
 		PromptGuardThreshold: getEnvInt("PROMPT_GUARD_THRESHOLD", 8),
 		OutputHTMLEncoding:   getEnvBool("OUTPUT_HTML_ENCODING", true),
+		MaxBodyBytes:         getEnvInt("MAX_BODY_BYTES", 65536), // 64KB default.
 		AllowedOrigins:       getEnvStr("ALLOWED_ORIGINS", "*"),
 	}
 }

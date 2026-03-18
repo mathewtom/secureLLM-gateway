@@ -34,7 +34,7 @@ This project demonstrates how to build the infrastructure layer behind a high-vo
 | LLM07 | System Prompt Leakage | Prompt extraction detection in input filter; system prompt treated as discoverable | Gateway — implemented |
 | LLM08 | Vector and Embedding Weaknesses | RAG/embedding-specific — out of scope for gateway layer | Model-level |
 | LLM09 | Misinformation | Audit logging of all LLM interactions for downstream review | Gateway — partial |
-| LLM10 | Unbounded Consumption | Per-user token bucket rate limiting with role-based rates and burst control | Gateway — implemented |
+| LLM10 | Unbounded Consumption | Per-user token bucket rate limiting, request body size limits, server timeouts | Gateway — implemented |
 
 ### PCI DSS Compliance Controls
 
@@ -149,6 +149,7 @@ secureLLM-gateway/
 │   │   └── routes.go     # Route registration with per-route middleware
 │   ├── middleware/        # Security middleware chain
 │   │   ├── auth.go       # JWT Bearer token validation
+│   │   ├── body_limit.go # Request body size enforcement
 │   │   ├── chain.go      # Middleware composition
 │   │   ├── logging.go    # Structured audit logging
 │   │   ├── output_sanitizer.go # PII redaction, encoding, content filter
@@ -186,6 +187,7 @@ All configuration is via environment variables:
 | `RATE_LIMIT_BURST` | `10` | Token bucket burst capacity |
 | `PROMPT_GUARD_THRESHOLD` | `8` | Prompt injection scoring threshold (lower = stricter) |
 | `OUTPUT_HTML_ENCODING` | `true` | HTML-encode LLM output to prevent XSS |
+| `MAX_BODY_BYTES` | `65536` | Maximum request body size in bytes (64KB) |
 | `ALLOWED_ORIGINS` | `*` | CORS allowed origins |
 
 ## Security Headers
@@ -210,7 +212,7 @@ Cache-Control: no-store, no-cache, must-revalidate
 - [x] Per-user rate limiting (token bucket, role-based)
 - [x] Prompt injection detection (scoring-based, OWASP LLM01)
 - [x] Output sanitization — PII redaction, HTML encoding, content filtering (OWASP LLM02/LLM05)
-- [ ] Request body size limits
+- [x] Request body size limits (OWASP LLM10)
 - [ ] Kubernetes deployment manifests
 - [ ] CI/CD pipeline with SAST and dependency scanning
 - [ ] Security test suite (fuzzing, integration)
